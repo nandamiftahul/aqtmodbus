@@ -1,1 +1,185 @@
 
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>AQT560 TCP Modbus Checker (Web)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Inter", Arial, sans-serif;
+      background: linear-gradient(to bottom right, #0a2a6b, #004aad, #0078d7);
+      color: white;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    h1 { text-align: center; margin-bottom: 30px; }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .box {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .box h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }
+
+    label { margin-right: 5px; }
+    input, select, button {
+      margin: 5px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+    }
+
+    input, select {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      width: 120px;
+    }
+
+    select { width: 100%; }
+
+    button {
+      background: #00e676;
+      color: #002b5c;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background: #69f0ae;
+    }
+
+    #log {
+      width: 100%;
+      height: 220px;
+      background: #000;
+      color: #00e676;
+      font-family: monospace;
+      resize: none;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+
+    #value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #00e676;
+      margin-top: 10px;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 13px;
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+  <h1>AQT560 TCP Modbus Checker (Web)</h1>
+
+  <div class="container">
+    <!-- Koneksi -->
+    <div class="box">
+      <h2>Koneksi TCP</h2>
+      <div>
+        <label>IP:</label>
+        <input id="ip" value="192.168.0.7">
+        <label>Port:</label>
+        <input id="port" value="9001">
+        <button id="connect">Connect</button>
+        <button id="disconnect" disabled>Disconnect</button>
+      </div>
+      <p id="status">Status: Disconnected</p>
+    </div>
+
+    <!-- Command -->
+    <div class="box">
+      <h2>Perintah</h2>
+      <select id="command">
+        {% for cmd in commands %}
+        <option>{{ cmd }}</option>
+        {% endfor %}
+      </select>
+      <button id="send" disabled>Send Command</button>
+    </div>
+
+    <!-- Output -->
+    <div class="box">
+      <h2>Output</h2>
+      <textarea id="log" readonly></textarea>
+      <div id="value">Value: -</div>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Terrindo · BMKG · Meteomodem | Flask-Web AQT560 Modbus Checker
+  </footer>
+
+  <script>
+    $(function() {
+      $('#connect').click(function() {
+        $.post('/connect', { ip: $('#ip').val(), port: $('#port').val() }, function(resp) {
+          if (resp.success) {
+            $('#status').text(`Connected to ${$('#ip').val()}:${$('#port').val()}`);
+            $('#connect').prop('disabled', true);
+            $('#disconnect, #send').prop('disabled', false);
+          } else {
+            $('#status').text("Failed to connect");
+          }
+        });
+      });
+
+      $('#disconnect').click(function() {
+        $.post('/disconnect', {}, function() {
+          $('#status').text("Disconnected");
+          $('#connect').prop('disabled', false);
+          $('#disconnect, #send').prop('disabled', true);
+        });
+      });
+
+      $('#send').click(function() {
+        $.post('/send', { command: $('#command').val() }, function(resp) {
+          $('#log').val(resp.log);
+          $('#value').text(`Value: ${resp.value ?? '-'}`);
+          $('#status').text("Command sent");
+        });
+      });
+    });
+  </script>
+</body>
+</html>
