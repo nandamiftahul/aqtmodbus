@@ -4,6 +4,7 @@
 import socket
 from crccheck.crc import Crc16Modbus
 from time import sleep
+from datetime import datetime
 
 
 class Communication:
@@ -122,6 +123,8 @@ class Communication:
     
         # --- Log RX lengkap ---
         rx_hex = " ".join(f"{b:02X}" for b in stream)
+        now = datetime.now()
+        print(now.strftime("Waktu Sampling : %d-%m-%y %H:%M:%S"))
         print("========== AQT560 (TCP) ==========")
         print(f"WRITE > {data_full.upper()}")
         print(f"RX RAW> {rx_hex}")
